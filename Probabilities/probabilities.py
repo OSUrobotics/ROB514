@@ -143,6 +143,7 @@ def plot_f_sampled(n=10):
     # Build a lambda function that uses the mapping function and normalizes for area
     # calculate area under curve for normalized pdf (should be 1)
     # Sample to create the histogram
+    # Width of each bin
     # Summed values of the histogram
     # Create normalized histogram/pmf
     # Plot
