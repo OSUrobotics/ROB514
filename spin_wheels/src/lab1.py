@@ -16,7 +16,7 @@ def lidar_callback(scan_msg):
     # Fill in the fields.  Field values are unspecified 
     # until they are actually assigned. The Twist message 
     # holds linear and angular velocities.
-    command.linear.x = 0.1
+    command.linear.x = 0.0
     command.linear.y = 0.0
     command.linear.z = 0.0
     command.angular.x = 0.0
