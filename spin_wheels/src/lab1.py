@@ -16,7 +16,7 @@ def lidar_callback(scan_msg):
     # Fill in the fields.  Field values are unspecified 
     # until they are actually assigned. The Twist message 
     # holds linear and angular velocities.
-    command.linear.x = 1.0
+    command.linear.x = 0.1
     command.linear.y = 0.0
     command.linear.z = 0.0
     command.angular.x = 0.0
@@ -53,10 +53,10 @@ if __name__ == "__main__":
     rospy.init_node('lab1', log_level=rospy.DEBUG)
 
     # subscribe to lidar laser scan message
-    lidar_sub = rospy.Subscriber('base_scan', LaserScan, lidar_callback)
+    lidar_sub = rospy.Subscriber('/scan', LaserScan, lidar_callback)
 
     # publish twist message
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
     # Turn control over to ROS
     rospy.spin()
