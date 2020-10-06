@@ -1,0 +1,6 @@
+<launch>
+    <env name="TURTLEBOT3_MODEL" value="burger"/>
+	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch"/>
+	<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch"/>
+	<node pkg="spin_wheels" type="lab1.py" name="lab1" output="screen"/>
+</launch>
