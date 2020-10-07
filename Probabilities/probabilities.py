@@ -78,7 +78,7 @@ def create_plot(pdf, hist=(0, 1, 0), pmf=(0, 1, 0), xlim_pf=(-1, 1), title='No t
     ax2.set_ylabel('n samples')
 
     # The pmf and the pdf
-    plot_pmf(ax3, pmf, xlim_hist, "{} pmf & pdf".format(title))
+    plot_pmf(ax3, pmf, xlim_hist, "{} pdf & pmf".format(title))
     ax3.set_xlabel('x')
     ax3.set_ylabel('prob')
 
@@ -178,6 +178,7 @@ def plot_pmf_samples(pmf=(0.1, 0.8, 0.1), x_lim=(0, 1), n=10):
     # normalize the bin counts and plot
     # plot the normalized bin counts
     # end homework 1 - problem 3
+    plt.show(block=True)
 
 
 if __name__ == '__main__':
