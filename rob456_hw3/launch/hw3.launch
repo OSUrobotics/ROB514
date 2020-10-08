@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="stage_ros" type="stageros" name="simulator" args="$(find rob456_hw3)/worlds/manyDotsNoisyOdom.world"/>
+  <node pkg="rob456_hw3" type="hw3.py" name="lab3" output="screen" />
+
+  <!-- Insert a call to the slam_gmapping node -->
+
+  <!-- Insert a call to rviz (optional) -->
+</launch>
