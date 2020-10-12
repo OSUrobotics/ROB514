@@ -167,6 +167,7 @@ if __name__ == '__main__':
 
         dist_moved.append(rs.move_gauss(0))
 
+    # This one will only pass when we do homework 3
     mu_moved = np.mean(dist_moved)
     SD_moved = np.std(dist_moved)
     if abs(mu_moved) > 0.01:
