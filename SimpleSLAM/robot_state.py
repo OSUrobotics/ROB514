@@ -21,7 +21,7 @@ class RobotState:
         self.prob_move_right_if_right = 0.05
         self.prob_no_move_if_right = 0.15
 
-        self.robot_move_SD_err = 0.0
+        self.robot_move_standard_deviation_err = 0.1
 
         # Gaussian probabilities
         self.set_move_gauss_probabilities(0.05)
@@ -55,7 +55,7 @@ class RobotState:
 
     # For Kalman filtering - error in movement
     def set_move_gauss_probabilities(self, standard_deviation):
-        self.robot_move_SD_err = standard_deviation
+        self.robot_move_standard_deviation_err = standard_deviation
 
     # Actually move - don't move off of end of hallway
     def _move_(self, amount):
@@ -169,10 +169,10 @@ if __name__ == '__main__':
 
     # This one will only pass when we do homework 3
     mu_moved = np.mean(dist_moved)
-    SD_moved = np.std(dist_moved)
+    standard_deviation_moved = np.std(dist_moved)
     if abs(mu_moved) > 0.01:
         raise ValueError("Mean should be close to 0, is {}".format(mu_moved))
-    if abs(SD_moved - rs.robot_move_SD_err) > 0.01:
-        raise ValueError("Standard deviation should be close to {}, is {}".format(rs.robot_move_SD_err, SD_moved))
+    if abs(standard_deviation_moved - rs.robot_move_standard_deviation_err) > 0.01:
+        raise ValueError("Standard deviation should be close to {}, is {}".format(rs.robot_move_standard_deviation_err, standard_deviation_moved))
 
     print("Passed tests")
