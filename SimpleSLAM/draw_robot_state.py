@@ -263,7 +263,10 @@ class DrawRobotAndWalls(QWidget):
         standard_deviation = self.state_estimation.standard_deviation
         dy = [np.exp(-np.power(mu - x, 2.0) / (2 * np.power(standard_deviation, 2.0))) for x in dx]
         pts = []
-        max_y = np.max(dy)
+        # Protect against sd set to zero/NaN
+        max_y = max(np.exp(-np.power(0, 2.0) / (2 * np.power(standard_deviation, 2.0))), 1e-12)
+        if max_y < 1e-6:
+            max_y = 1e-6
         for x, y in zip(dx, dy):
             pts.append(QPoint(self.x_map(x), self.y_map(0.5 * y*self.draw_height/max_y)))
         for i in range(0, len(pts)-1):
@@ -279,7 +282,8 @@ class DrawRobotAndWalls(QWidget):
         standard_deviation = self.world_state.wall_standard_deviation
         dy = [np.exp(-np.power(mu - x, 2.0) / (2 * np.power(standard_deviation, 2.0))) for x in dx]
         pts = []
-        max_y = np.max(dy)
+        # Protect against sd set to zero/NaN
+        max_y = max(np.exp(-np.power(0, 2.0) / (2 * np.power(standard_deviation, 2.0))), 1e-12)
         height = 0.1 / max_y
         for x, y in zip(dx, dy):
             pts.append(QPoint(self.x_map(x), self.y_map(self.draw_height + 0.05 + y*height)))
@@ -303,7 +307,8 @@ class DrawRobotAndWalls(QWidget):
         standard_deviation = self.robot_state.robot_move_standard_deviation_err
         dy = [np.exp(-np.power(mu - x, 2.0) / (2 * np.power(standard_deviation, 2.0))) for x in dx]
         pts = []
-        max_y = np.max(dy)
+        # Protect against sd set to zero/NaN
+        max_y = max(np.exp(-np.power(0, 2.0) / (2 * np.power(standard_deviation, 2.0))), 1e-12)
         height = 0.2
         for x, y in zip(dx, dy):
             pts.append(QPoint(self.x_map(x), self.y_map(y*height/max_y)))
