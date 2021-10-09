@@ -264,8 +264,8 @@ class DrawRobot(QWidget):
         """ Return the end point of the arm"""
         matrices = self.get_matrices()
         mat_accum = np.identity(3)
-        # begin homework 1 : Problem 3
-        # end homework 1 : Problem 3
+        # begin homework 1 : Problem 2 (second part)
+        # end homework 1 : Problem 2 (second part)
         pt_end = mat_accum[0:2, 2]
         return pt_end
 
