@@ -76,9 +76,9 @@ from scipy.optimize import curve_fit
 
 # Gaussian function
 def gaussian(x, mu, sigma):
-    """Gaussian with given mean, sigma
+    """Gaussian with given mu, sigma
     @param x - the input x value
-    @param mu - the mean
+    @param mu - the mu
     @param sigma - the standard deviation
     @return y = gauss(x) """
     return (1.0 / (sigma * np.sqrt(2 * np.pi))) * np.exp(- (x - mu) ** 2 / (2 * sigma ** 2))
@@ -227,7 +227,7 @@ def plot_fit_results(axs, in_str_title, fitted_mus, fitted_sigmas, errs, samples
 #       said there was a difference. There is no "right" answer for this, just convention
 #   For the outlier removal, just find data points that don't really fit either distribution. You could get really
 #     fancy here and actually determine (for the overlap region) if a data point belongs to gaussian 1 or 2...
-#   There's two versions of data fitting - one just gets the mean/sd from the sample points, the other actually does a
+#   There's two versions of data fitting - one just gets the mu/sd from the sample points, the other actually does a
 #     curve fit, trying to match the shape of the Gaussian [optional]
 
 def cluster_kmeans(x_values, n_centers):
@@ -249,7 +249,7 @@ def t_test(samples_a, samples_b):
 
 
 def fit_x_values_one_cluster(samples_x, samples_y):
-    """ Given x and y values, 'fit' the x values by calculating the mean and the standard variagion
+    """ Given x and y values, 'fit' the x values by calculating the mu and the standard variagion
     Evaluate the fit using the y values (L2 difference between gaussian(x) and samples_y)
     @param samples_x - x samples
     @param samples_y - y samples
@@ -259,7 +259,7 @@ def fit_x_values_one_cluster(samples_x, samples_y):
 
 
 def fit_y_values_one_cluster(samples_x, samples_y):
-    """Use a gradient search method to calculate a mean and a sigma that minimize the L2 norm
+    """Use a gradient search method to calculate a mu and a sigma that minimize the L2 norm
     @param samples_x - x samples
     @param samples_y - y samples
     @return mu, sigma, L2 err"""
@@ -301,7 +301,7 @@ def remove_outliers(samples, labels, n_clusters, perc_mean_err):
     @param samples - the original 2xn data set
     @param labels - a 1xn set of integer labels, with the label -1 indicating the data point is an outlier
     @param n_clusters - how many unique clusters there are
-    @param perc_mean_err - what percentage of the mean error to clip at (should be bigger than 1)
+    @param perc_mean_err - what percentage of the mu error to clip at (should be bigger than 1)
     @returns new_labels - a 1xn set of integer labels, with the label -1 indicating the data point is an outlier"""
 
 
@@ -320,7 +320,7 @@ def do_example(mus, sigmas, noise_level, n_samples, n_clusters, perc_mean_err_cl
     @param noise_level - how much uniform noise to add to y value, plus random points
     @param n_samples - Number of samples for the gaussians, and the uniform noise
     @param n_clusters - Number of clusters to try
-    @param perc_mean_err_clip - what percentage of the mean error to clip when doing outlier removal
+    @param perc_mean_err_clip - what percentage of the mu error to clip when doing outlier removal
     """
     fig, axs = plt.subplots(2, 4)
 
