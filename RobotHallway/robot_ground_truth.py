@@ -39,7 +39,7 @@ class RobotGroundTruth:
         self.set_move_right_probabilities()
         self.set_move_continuos_probabilities()
 
-    def reset(self):
+    def reset_location(self):
         """ Put robot in the middle"""
         self.robot_loc = 0.5
 
@@ -69,9 +69,9 @@ class RobotGroundTruth:
 
 # YOUR CODE HERE
 
-    def set_move_continuos_probabilities(self, mu=0.0, sigma=0.1):
+    def set_move_continuos_probabilities(self, sigma=0.1):
         """ Set the noise for continuous movement
-        @param mu - mu of noise
+        Note - mean is zero for this assignment
         @param sigma - standard deviation of noise"""
 
         # Kalman assignment
@@ -230,19 +230,19 @@ def test_continuous_move_functions(b_print=True):
     if b_print:
         print("Checking move with normal distribution probabilities")
     dist_moved = []
-    mu = 0.1
     sigma = 0.1
+    move_amount = -0.2
     n_samples = 10000
-    rgt.set_move_continuos_probabilities(mu, sigma)
+    rgt.set_move_continuos_probabilities(sigma)
     for i in range(0, n_samples):
         rgt.robot_loc = 0.5
 
-        dist_moved.append(rgt.move_continuous(0.0))
+        dist_moved.append(rgt.move_continuous(move_amount))
 
     mu_moved = np.mean(dist_moved)
     sigma_moved = np.std(dist_moved)
-    if not np.isclose(mu_moved, mu, atol=0.01):
-        raise ValueError(f"Mean should be close to {mu}, is {mu_moved}")
+    if not np.isclose(mu_moved, move_amount, atol=0.01):
+        raise ValueError(f"Mean should be close to {move_amount}, is {mu_moved}")
     if not np.isclose(sigma_moved, sigma, atol=0.01):
         raise ValueError(f"Mean should be close to {sigma}, is {sigma_moved}")
 

@@ -189,7 +189,7 @@ def test_move_one_direction(b_print=True):
             print(f"Test move {dir_move.__name__}")
         # Reset both the bayes filter probabilities and the robot ground truth location
         bayes_filter.reset_probabilities(n_bins)
-        robot_ground_truth.reset()
+        robot_ground_truth.reset_location()
 
         for _ in range(0, n_moves):
             # Move the robot
@@ -203,6 +203,9 @@ def test_move_one_direction(b_print=True):
             print("Passed")
 
     return True
+
+
+# YOUR CODE HERE
 
 
 def test_move_update(b_print=True):
@@ -255,6 +258,7 @@ if __name__ == '__main__':
     b_print = False
     test_bayes_filter_sensor_update(b_print)
     test_move_one_direction(b_print)
+
 
     test_move_update(b_print)
 

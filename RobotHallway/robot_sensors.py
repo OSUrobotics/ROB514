@@ -31,9 +31,9 @@ class RobotSensors:
 
 # YOUR CODE HERE
 
-    def set_distance_wall_sensor_probabilities(self, mu=0.0, sigma=0.1):
+    def set_distance_wall_sensor_probabilities(self, sigma=0.1):
         """ Setup the wall sensor probabilities (store them in the dictionary)
-        @param mu - mu of noise
+        Note: Mean is zero for this assignment
         @param sigma - sigma of noise"""
 
         # Kalman assignment
@@ -115,7 +115,6 @@ def test_continuous_sensor(b_print=True):
     robot_gt = RobotGroundTruth()
     robot_sensor = RobotSensors()
 
-    mu = 0.01
     sigma = 0.01
 
     # Doing this as a for loop with pre-allocating the data (np.zeros instead of a list with an append) because
@@ -124,7 +123,7 @@ def test_continuous_sensor(b_print=True):
     # This is the exactly how one would measure sensor noise in the first place, btw
     n_samples = 10000
     dist_measured = np.zeros(n_samples)
-    robot_sensor.set_distance_wall_sensor_probabilities(mu, sigma)
+    robot_sensor.set_distance_wall_sensor_probabilities(sigma)
     for i in range(0, n_samples):
         # Put the robot in a random location
         robot_gt.place_random()
@@ -135,8 +134,8 @@ def test_continuous_sensor(b_print=True):
     # What is the mu and sigma of the sensor noise?
     mu_query = np.mean(dist_measured)
     sigma_query = np.std(dist_measured)
-    if not np.isclose(mu_query, mu, atol=0.01):
-        raise ValueError(f"Mean should be close to {mu}, is {mu_query}")
+    if not np.isclose(mu_query, 0.0, atol=0.01):
+        raise ValueError(f"Mean should be close to 0.0, is {mu_query}")
     if not np.isclose(sigma_query, sigma, atol=0.01):
         raise ValueError(f"Mean should be close to {sigma}, is {sigma_query}")
 

@@ -12,6 +12,7 @@ from robot_ground_truth import RobotGroundTruth
 # State estimation using Kalman filter
 #   Stores the belief about the robot's location as a Gaussian
 #     See the probability_sampling assignment, gaussian, for how to implement store probability as a Gaussian
+# Slides for this assignment: https://docs.google.com/presentation/d/1Q6w-vczvWHanGDqbuz6H1qhTOkSrX54kf1g8NgTcipQ/edit?usp=sharing
 class KalmanFilter:
     def __init__(self):
         # Kalman (Gaussian) probabilities
@@ -21,6 +22,7 @@ class KalmanFilter:
         self.reset_kalman()
 
     # Put robot in the middle with a really broad standard deviation
+    #  NOTE - don't change this
     def reset_kalman(self):
         self.mu = 0.5
         self.sigma = 0.4
@@ -48,12 +50,14 @@ class KalmanFilter:
 # YOUR CODE HERE
 
 
-def test_kalman_update():
+def test_kalman_update(b_print=True):
     """ Check against the saved results
+    @param b_print - print the results, y/n
     Beware that this requires only calling random.uniform when doing the sensor/move - any additional
      calls will throw the random numbers off"""
 
-    print("Testing Kalman")
+    if b_print:
+        print("Testing Kalman")
     # Generate some move sequences and compare to the correct answer
     import json
     with open("Data/check_kalman_filter.json", "r") as f:
@@ -64,8 +68,8 @@ def test_kalman_update():
     robot_sensor = RobotSensors()
 
     # Set mu/sigmas
-    robot_ground_truth.set_move_continuos_probabilities(answers["move_error"]["mu"], answers["move_error"]["sigma"])
-    robot_sensor.set_distance_wall_sensor_probabilities(answers["sensor_noise"]["mu"], answers["sensor_noise"]["sigma"])
+    robot_ground_truth.set_move_continuos_probabilities(answers["move_error"]["sigma"])
+    robot_sensor.set_distance_wall_sensor_probabilities(answers["sensor_noise"]["sigma"])
 
     # This SHOULD insure that you get the same answer as the solutions, provided you're only calling uniform within
     #  robot_ground_truth.move*
@@ -75,9 +79,9 @@ def test_kalman_update():
     for seq in answers["results"]:
         # Reset to uniform
         kalman_filter.reset_kalman()
-        robot_ground_truth.reset()
+        robot_ground_truth.reset_location()
         for i, s in enumerate(seq["seq"]):
-            if s is "Sensor":
+            if s == "Sensor":
                 dist = robot_sensor.query_distance_to_wall(robot_ground_truth)
                 kalman_filter.update_gauss_sensor_reading(robot_sensor, dist)
                 if not np.isclose(dist, seq["sensor_reading"][i]):
@@ -89,11 +93,12 @@ def test_kalman_update():
                     print(f"Warning, move should be {seq['actual_move'][i]}, got {actual_move}")
 
         if not np.isclose(seq["mu"], kalman_filter.mu, atol=0.01):
-            print(f"Failed sequence {seq['seq']}, got mu {kalman_filter.mu}, expected {seq['mu']}")
+            raise ValueError(f"Failed sequence {seq['seq']}, got mu {kalman_filter.mu}, expected {seq['mu']}")
         if not np.isclose(seq["sigma"], kalman_filter.sigma, atol=0.01):
-            print(f"Failed sequence {seq['seq']}, got sigma {kalman_filter.sigma}, expected {seq['sigma']}")
+            raise ValueError(f"Failed sequence {seq['seq']}, got sigma {kalman_filter.sigma}, expected {seq['sigma']}")
 
-    print("Passed")
+    if b_print:
+        print("Passed")
     return True
 
 
