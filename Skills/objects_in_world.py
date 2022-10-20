@@ -39,16 +39,8 @@ def write_object(obj, name):
     """Strip out the numpy arrays before writing
     @param obj - the object
     @param name - the file name to write to"""
-    obj_save_xys = obj["XYs"]
     obj_save_pts = obj["Pts"]
     obj_save_matrix = obj["Matrix"]
-    obj_save_name = obj["Name"]
-    try:
-        obj["XYs"] = []
-        for c in obj["Pts"].shape[1]:
-            obj["XYs"].append(obj["Pts"][0, c], obj["Pts"][1, c])
-    except AttributeError:
-        obj["XYs"] = obj_save_xys
 
     obj["Pts"] = []
     obj["Matrix"] = []
@@ -57,10 +49,8 @@ def write_object(obj, name):
     with open("Data/" + name + ".json", 'w') as f:
         dump(obj, f)
 
-    obj["XYs"] = obj_save_xys
     obj["Pts"] = obj_save_pts
     obj["Matrix"] = obj_save_matrix
-    obj["Name"] = obj_save_name
 
 
 
@@ -143,7 +133,7 @@ def create_worlds():
 
 
 # --------------------------- Plotting ------------------
-def plot_object(axs, obj):
+def plot_object_in_own_coord_system(axs, obj):
     """Plot the object in its own coordinate system
     @param axs - the axes of the figure to plot in
     @param obj - the object (as a dictionary)"""
@@ -156,6 +146,24 @@ def plot_object(axs, obj):
     axs.plot(xs, ys, color=col, linestyle='dashed', marker='x', label=obj["Name"])
 
 
+def plot_object_in_world_coord_system(axs, obj):
+    """Plot the object in its own coordinate system
+    @param axs - the axes of the figure to plot in
+    @param obj - the object (as a dictionary)"""
+    try:
+        pts_in_world = obj["Matrix"] @ obj["Pts"]
+    except ValueError or KeyError:
+        obj["Pts"] = get_pts_as_numpy_array(obj)
+        obj["Matrix"] = get_matrix_from_sequence(obj["Matrix seq"])
+        pts_in_world = obj["Matrix"] @ obj["Pts"]
+
+    col = 'black'
+    if "Color" in obj:
+        col = obj["Color"]
+
+    axs.plot(pts_in_world[0, :], pts_in_world[1, :], color=col, linestyle='solid', label=obj["Name"])
+
+
 def plot_world(axs, world, objs, camera):
     """Plot the object in its own coordinate system
     @param axs - the axes of the figure to plot in
@@ -163,21 +171,10 @@ def plot_world(axs, world, objs, camera):
     @param objs - the object as a list of dictionaries"""
     xs = [p[0] for p in world["XYs"]]
     ys = [p[1] for p in world["XYs"]]
-    axs.plot(xs, ys, color="blue", linestyle='solid', marker='o', label=world["name"])
+    axs.plot(xs, ys, color="blue", linestyle='solid', marker='o', label=world["Name"])
 
     for obj in objs:
-        try:
-            pts_in_world = obj["Matrix"] @ obj["Pts"]
-        except KeyError:
-            obj["Pts"] = get_pts_as_numpy_array(obj)
-            obj["Matrix"] = get_matrix_from_sequence(obj["Matrix seq"])
-            pts_in_world = obj["Matrix"] @ obj["Pts"]
-
-        col = 'black'
-        if "Color" in obj:
-            col = obj["Color"]
-
-        axs.plot(pts_in_world[0, :], pts_in_world[1, :], color=col, linestyle='solid', label=obj["Name"])
+        plot_object_in_world_coord_system(axs, obj)
 
 
 def plot_all(world, objs, camera):
@@ -193,7 +190,7 @@ def plot_all(world, objs, camera):
 
     axs[1].set_title("Objects")
     for obj in objs:
-        plot_object(axs[1], obj)
+        plot_object_in_world_coord_system(axs[1], obj)
     axs[1].legend()
     axs[1].axis('equal')
 
