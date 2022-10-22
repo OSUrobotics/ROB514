@@ -205,7 +205,7 @@ def check_is_rotation(mat, b_print=False):
     # You might find numpy.linalg.norm and numpy.dot and numpy.isclose useful
     # TODO: Return TRUE if the matrix is orthonormal/rotation matrix
     #       Return FALSE otherwise
-    #       If b_print is True, also print out why the rotation matrix failed
+    #       If b_print_test is True, also print out why the rotation matrix failed
 # YOUR CODE HERE
     return True
 

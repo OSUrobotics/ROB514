@@ -12,7 +12,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matrix_transforms import get_matrix_from_sequence
+from matrix_transforms import make_matrix_from_sequence
 from json import dump, load
 
 
@@ -28,10 +28,10 @@ def read_object(name):
     """Read in the object from Data/name.json and convert the XYs to a numpy array
     @param name - name of the json file
     @return an object as a dictionary"""
-    with open("Data/" + name + ".json", "r") as f:
+    with open("../Skills/Data/" + name + ".json", "r") as f:
         obj = load(f)
         obj["Pts"] = get_pts_as_numpy_array(obj)
-        obj["Matrix"] = get_matrix_from_sequence(obj["Matrix seq"])
+        obj["Matrix"] = make_matrix_from_sequence(obj["Matrix seq"])
     return obj
 
 
@@ -51,7 +51,6 @@ def write_object(obj, name):
 
     obj["Pts"] = obj_save_pts
     obj["Matrix"] = obj_save_matrix
-
 
 
 # ------------------- Making a robot by clicking in screen ---------------
@@ -102,6 +101,14 @@ def make_square():
     write_object(obj, "Square")
 
 
+def make_wedge():
+    """Make a wedge object """
+    obj = make_blank_object()
+    obj["XYs"] = [[-1, -1], [1, -0.8], [1, 0.8], [-1, 1], [-1, -1]]
+    obj["Name"] = "Wedge"
+    write_object(obj, "Wedge")
+
+
 # ----------------- Some helper methods -------------------------------
 
 def get_pts_as_numpy_array(obj):
@@ -111,7 +118,6 @@ def get_pts_as_numpy_array(obj):
     pts = None
 # YOUR CODE HERE
     return pts
-
 
 
 # --------------------------- Worlds ------------------
@@ -146,16 +152,30 @@ def plot_object_in_own_coord_system(axs, obj):
     axs.plot(xs, ys, color=col, linestyle='dashed', marker='x', label=obj["Name"])
 
 
-def plot_object_in_world_coord_system(axs, obj):
-    """Plot the object in its own coordinate system
+def plot_object_in_world_coord_system(axs, obj, in_matrix=None):
+    """Plot the object in the world by applying in_matrix (if specified) followed by the
+      matrix transformation already in the object
     @param axs - the axes of the figure to plot in
-    @param obj - the object (as a dictionary)"""
+    @param obj - the object (as a dictionary)
+    @param matrix - an additional matrix to multiply the geometry by"""
+
+    matrix = in_matrix
+    if in_matrix is None:
+        matrix = np.identity(3)
+
+    # This only checks if the numpy array is the same size, not that the values are the same
     try:
-        pts_in_world = obj["Matrix"] @ obj["Pts"]
-    except ValueError or KeyError:
+        if len(obj["XYs"]) != obj["Pts"].shape[1]:
+            obj["Pts"] = get_pts_as_numpy_array(obj)
+    except:
         obj["Pts"] = get_pts_as_numpy_array(obj)
-        obj["Matrix"] = get_matrix_from_sequence(obj["Matrix seq"])
-        pts_in_world = obj["Matrix"] @ obj["Pts"]
+
+    # This multiplies the matrix by the points
+    try:
+        pts_in_world = matrix @ obj["Matrix"] @ obj["Pts"]
+    except ValueError or KeyError:
+        obj["Matrix"] = make_matrix_from_sequence(obj["Matrix seq"])
+        pts_in_world = matrix @ obj["Matrix"] @ obj["Pts"]
 
     col = 'black'
     if "Color" in obj:
@@ -197,6 +217,7 @@ def plot_all(world, objs, camera):
 
 if __name__ == '__main__':
     # make_square()
+    make_wedge()
 
     # make_object_by_clicking()
     create_worlds()
