@@ -205,7 +205,8 @@ def test_particle_filter(b_print=True):
     robot_sensor.set_distance_wall_sensor_probabilities(answers["sensor_noise"]["sigma"])
 
     # This SHOULD insure that you get the same answer as the solutions, provided you're only calling uniform within
-    #  robot_ground_truth_syntax.move*
+    #  the door sensor reading, one call to random.normal() for the move, and one call to uniform for each particle
+    #  in the importance sampling*
     np.random.seed(3)
 
     # Try different sequences
