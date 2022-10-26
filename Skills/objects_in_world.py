@@ -102,6 +102,15 @@ def make_square():
     write_object(obj, "Square")
 
 
+def make_wedge():
+    """Make a wedge object """
+    obj = make_blank_object()
+    obj["XYs"] = [[-1, -1], [1, -0.8], [1, 0.8], [-1, 1], [-1, -1]]
+    obj["Name"] = "Wedge"
+    write_object(obj, "Wedge")
+
+
+
 # ----------------- Some helper methods -------------------------------
 
 def get_pts_as_numpy_array(obj):
@@ -196,7 +205,8 @@ def plot_all(world, objs, camera):
 
 
 if __name__ == '__main__':
-    # make_square()
+    make_square()
+    make_wedge()
 
     # make_object_by_clicking()
     create_worlds()
