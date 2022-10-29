@@ -4,78 +4,230 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# --------------------------- Forward IK ------------------
-# The goal of this part of the assignment is to use matrices to position a robot arm in space.
+# --------------------------- Inverse Kinematics ------------------
+# The goal of this part of the assignment is to move the grasp point to a target position.
 #
+# Option 1: Bare-bones gradient descent
+# Option 2: Jacobians all the way down (with pseudo least squares to solve)
+#
+# Note: The point of this assignment is to get an understanding of how these techniques work. After this, you should
+#  never (well, almost never) write your own gradient descent/IK solver
 # Slides: https://docs.google.com/presentation/d/11gInwdUCRLz5pAwkYoHR4nzn5McAqfdktITMUe32-pM/edit?usp=sharing
 #
 
 import matrix_transforms as mt
 from objects_in_world import read_object, plot_object_in_world_coord_system
+import arm_forward_kinematics as afk
+
+# -------------------- Distance calculation --------------------
+# Whether you're doing gradient descent or IK, you need to know the vector and/or distance from the current
+#  grasp position to the target one. I've split this into two functions, one that returns an actual vector, the
+#  second of which calls the first then calculates the distance. This is to avoid duplicating code.
+def vector_to_goal(angles, arm, target):
+    """
+    Move the arm to have the given angles, then calculate the grasp pt. Return a vector going from the grasp pt to the target
+    Note that it is bad Pythonese form to change the angles in the arm...
+    @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+    @param arm - The arm geometry, as constructed in arm_forward_kinematics
+    @param target - a 2x1 numpy array (x,y) that is the desired target point
+    @return - a 2x1 numpy array that is the vector (vx, vy)
+    """
+    # TODO:
+    #   Call set_angles_of_arm_geometry to set the angles
+    #   Get the gripper/grasp location using get_gripper_location
+    #   Calculate and return the vector
+# YOUR CODE HERE
 
 
-        # Use the text field to say what happened
-        self.robot_arm.text = "Not improved"
+def distance_to_goal(angles, arm, target):
+    """
+    Length of vector - this function is zero when the gripper is at the target location, and gets bigger
+    as the gripper moves away
+    Note that, for optimization purposes, the distance squared works just as well, and will save a square root.
+    @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+    @param arm - The arm geometry, as constructed in arm_forward_kinematics
+    @param target - a 2x1 numpy array (x,y) that is the desired target point
+    @return: The distance
+    """
 
-        # begin homework 2 : Problem 1
-        b_improved = False
-        d_scl = 0.1
-        d_eps = pi/10000
-        # Keep trying smaller increments while nothing improves
-        while d_scl > 0.0001 and not b_improved:
-            # calculate the current distance
-            pt = self.robot_arm.arm_end_pt()
-            dist = pow(pt[0] - self.reach_x.value(), 2) + pow(pt[1] - self.reach_y.value(), 2)
-            # Try each angle in turn
-            for ang in self.theta_slds:
-                save_ang = ang.value()
-
-                # Gradient
-                ang.set_value(save_ang - d_eps)
-                pt_new = self.robot_arm.arm_end_pt()
-                dist_new = pow(pt_new[0] - self.reach_x.value(), 2) + pow(pt_new[1] - self.reach_y.value(), 2)
-
-                ang_try = save_ang + d_scl * pi
-                if dist_new < dist:
-                    ang_try = save_ang - 0.99 * d_scl * pi
-
-                ang.set_value(ang_try)
-                pt_new = self.robot_arm.arm_end_pt()
-                dist_new = pow(pt_new[0] - self.reach_x.value(), 2) + pow(pt_new[1] - self.reach_y.value(), 2)
-                if dist_new < dist:
-                    b_improved = True
-                    dist = dist_new
-                    self.robot_arm.text = "Improved {} eps {}".format(ang.name, d_scl)
-                else:
-                    ang.set_value(save_ang)
-            d_scl = d_scl / 2
-        # end homework 2 : Problem 1
+    # TODO: Call the function above, then return the vector's length
+# YOUR CODE HERE
 
 
+def calculate_gradient(angles, arm, target):
+    """
+    Calculate the gradient (derivative of distance_to_goal) with respect to each link angle (and the wrist angle)
+    @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+    @param arm - The arm geometry, as constructed in arm_forward_kinematics
+    @param target - a 2x1 numpy array (x,y) that is the desired target point
+    @return: f(x+h) - f(x) / h for all link angles (and the wrist angle) as a numpy array
+    """
+    # Use this value for h - it's small enough to be close to the correct derivative, but not so small that we'll
+    #  run into numerical errors
+    h = 1e-6
+
+    # Derivatives - append each derivative to this list
+    derivs = []
+
+    # TODO
+    # Step 1: First, calculate f(x) (the current distance)
+    # Step 2: For each link angle (do the gripper last)
+    #   Add h to the angle
+    #   Calculate the new distance with the new angles
+    #   Subtract h from the angle
+    #   Calculate (f(x+h) - f(x)) / h and append that to the derivs list
+    # Step 3: Do the wrist/gripper angle the same way (but remember, that angle
+    #   is stored in angles[-1][0])
+# YOUR CODE HERE
+    return derivs
 
 
-        # An example problem of an arm with radius 3 currently at angle theta
-        radius = 3
-        theta = 0.2
-        # Vector to the end point
-        r = [radius * cos(theta), radius * sin(theta), 0]
-        # Spin around z
-        omega_hat = [0, 0, 1]
-        # always 0 in 3rd component
-        omega_cross_r = np.cross(omega_hat, r)
-        # Desired x,y change
-        dx_dy = np.zeros([2, 1])
-        dx_dy[0, 0] = -0.01
-        dx_dy[1, 0] = -0.1
-        # Jacobian
-        J = np.zeros([2, 1])
-        J[0:2, 0] = np.transpose(omega_cross_r[0:2])
-        # Solve
-        d_ang = np.linalg.lstsq(J, dx_dy, rcond=None)[0]
-        # Check result of solve - should be the same as dx_dy
-        res = J @ d_ang
-        # The actual point you end up at if you change the angle by that much
-        pt_new = [radius * cos(theta + d_ang), radius * sin(theta + d_ang)]
+# ------------------------ Gradient descent -----------------
+# Step size is big
+# while step size still big
+#    While grasp point not at goal (and we're still moving towards goal)
+#      Calculate the gradient
+#      Try a step by gradient * step_size
+#    Shrink step size
+def gradient_descent(angles, arm, target, b_one_step=True):
+    """
+    Do gradient descent to move grasp point towards target
+    @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+    @param arm - The arm geometry, as constructed in arm_forward_kinematics
+    @param target - a 2x1 numpy array (x,y) that is the desired target point
+    @param b_one_step - if True, return angles after one successful movement towards goal
+    @ return angles that put the grasp point as close as possible to the target
+    """
+    step_size = 1.0
+    best_distance = distance_to_goal(angles, arm, target)
+    while step_size > 0.05:
+        # TODO: Calculate the gradient
+# YOUR CODE HERE
+
+        # TODO:
+        #  Try taking a step along the gradient
+        #    For each angle
+        #      new_angle = angle - step_size * gradient_for_that_angle
+        #  Calculate what the new distance would be with those angles
+        #  We go in the OPPOSITE direction of the gradient because we want to DECREASE distance
+        new_angles = []
+# YOUR CODE HERE
+        new_dist = distance_to_goal(new_angles, arm, target)
+
+        # TODO:
+        #   If the new distance is larger than the best distance, decrease the step size
+        #   Otherwise, if b_one_stop is True, return the new angles
+        #          if b_one_step is False, set angles to be new_angles and best_distance to be new_distance
+# YOUR CODE HERE
+
+    # We never got better - return the original angles
+    return angles
+
+
+# ----------------------------- Jacobians -------------------------------------------
+
+def practice_jacobian():
+    """ An example problem of an arm with radius 3 currently at angle theta = 0.2
+    This is just to check that you can calculate the Jacobian for one link before doing the matrix version """
+    radius = 3
+    theta = 0.2
+
+    # TODO: Create a 3D vector to the end point (r cos(theta), r sin(theta), 0)
+    #   Needs to be 3D for cross product to work
+# YOUR CODE HERE
+
+    # The z vector we spin around
+    omega_hat = [0, 0, 1]
+
+    # TODO: Take the cross product of omega_hat and r
+    #  This should always be 0 in 3rd component for a 2D vector
+# YOUR CODE HERE
+
+    # TODO: Build the Jacobian, which in this case is a 2x1 matrix
+    # This matrix takes changes in the angles to changes in x,y
+    #   ... and is just the first two components of omega hat cross r
+    # TODO: Set the column of the matrix to be omega hat cross r
+    jacobian_matrix = np.zeros([2, 1])
+# YOUR CODE HERE
+
+    # Now we'll set up a linear equation solve that looks like
+    #  A x = b  (np.linalg.lstsq)
+    # Where A is the Jacobian we just built, b is the desired change in x,y,
+    #   and x is the angle we're solving form
+
+    # TODO: Create a 2x1 matrix that stores the desired change in x and change in y
+    #  ... in this case, use -0.01 and -0.1
+    # Desired x,y change
+    b_matrix = np.zeros([2, 1])
+# YOUR CODE HERE
+
+    # TODO: Solve the matrix using np.linalg.lstsq. Should return a 1x1 matrix with an angle change
+    #   Note: Use rcond=None
+    d_ang = np.zeros([1, 1])
+# YOUR CODE HERE
+
+    # Check result of solve - should be the same as dx_dy
+    res = jacobian_matrix @ d_ang
+
+    # The actual point you end up at if you change the angle by that much
+    pt_new = [radius * np.cos(theta + d_ang), radius * np.sin(theta + d_ang)]
+
+    print(f"J angle {res}, pt new {pt_new}")
+
+    return d_ang
+
+
+def calculate_jacobian(arm_with_angles):
+    """
+    Calculate the Jacobian from the angles and lengths in the arm
+    Start with the wrist and work *backwards*, calculating Ri @ Ti @ previous_matrix
+    The vector r from the practice Jacobian problem above is just the last column of that matrix
+    @param arm_with_angles - The arm geometry, as constructed in arm_forward_kinematics, with angles
+    @return 2xn Jacobian matrix that maps changes in angles to changes in x,y """
+
+    # One column for each link plus the wrist
+    jacob = np.zeros([2, len(arm_with_angles)])
+
+    # TODO: To make things simpler, first build two lists that have the link lengths and angles in REVERSE order
+    # Note that python has a handy reverse method for lists
+    #  This is Python-ese for getting out the angles/lengths from the list of dictionaries
+    #  Don't forget the wrist
+    angles_links = [link["Angle"] for link in arm_with_angles[0:-1]]
+    lengths_links = [link["Length"] for link in arm_with_angles[0:-1]]
+    angles_reverse_order = []
+    lengths_reverse_order = []
+# YOUR CODE HERE
+
+    # TODO: Now work backwards, calculating R @ T @ mat_accum
+    #   In each iteration, update mat_accum THEN extract the
+    #   vector r then do omega_hat cross r and put the result in the
+    #   column of the matrix
+    mat_accum = np.identity(3)
+    # The z vector we spin around
+    omega_hat = [0, 0, 1]
+
+    # More python-ese - this gets each of the angles/lengths AND an enumeration variable i
+    for i, (ang, length) in enumerate(zip(angles_reverse_order, lengths_reverse_order)):
+        # TODO: Build mat_accum
+        #       Get r from mat_accum
+        #       Do omega_hat cross r
+        #       Put the result in the n-i column in jacob - i.e., wrist should go in the last column in jacob
+# YOUR CODE HERE
+    return jacobian
+
+def solve_jacobian(jacobian, vx_vy):
+
+def jacobian(angles, arm, target, b_one_step=True):
+    """
+    Use jacobian to calculate move grasp point towards target
+    @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+    @param arm - The arm geometry, as constructed in arm_forward_kinematics
+    @param target - a 2x1 numpy array (x,y) that is the desired target point
+    @param b_one_step - if True, return angles after one successful movement towards goal
+    @ return angles that put the grasp point as close as possible to the target
+    """
+
+    """
 
         # begin homework 2 : Problem 2
         mats = self.robot_arm.get_matrices()
@@ -148,3 +300,4 @@ from objects_in_world import read_object, plot_object_in_world_coord_system
         # to set text
         # self.robot_arm.text = text
         # end homework 2 problem 2
+        """

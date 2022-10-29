@@ -25,6 +25,7 @@ from objects_in_world import read_object, plot_object_in_world_coord_system
 #    obj["Matrix seq"].append(mt.make_xxx_dict(params))
 # where xxx is a scale followed by a rotate (maybe) followed by a translate
 # See slides for what the resulting shapes look like
+# Wedge and Square are both -1,-1 to 1, 1
 def set_transform_base(obj_wedge, base_width=1.0, base_height=0.5):
     """ Position and orient the base of the object
     Base middle should be at 0,0, wedge pointed up, base_width wide, base_height tall
@@ -33,6 +34,9 @@ def set_transform_base(obj_wedge, base_width=1.0, base_height=0.5):
 
     # TODO: append transformations to obj_wedge["Matrix seq"] to get it in the right position/size/orientation
     #  Scale first, then rotate, then translate
+    # Note that the part where we actually multiply the points (currently stored in the key "XYs") by the matrix
+    #  (stored in the key "Matrix") will happen when we make the plot
+    # Open up Data/Wedge.json if you want to see the XYs (this shape is made in objects_in_world.py)
 # YOUR CODE HERE
     # Force recalculation of matrix
     obj_wedge["Matrix"] = mt.make_matrix_from_sequence(obj_wedge["Matrix seq"])

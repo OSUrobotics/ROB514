@@ -326,27 +326,27 @@ def test_checks(b_print=False):
     mat_not_orthonormal[1, 0] = 0.1
 
     if check_is_rotation(mat_not_orthonormal, b_print):
-        raise ValueError(f"Matrix {mat} is not orthonormal, should fail orthogonal check")
+        raise ValueError(f"Matrix {mat_not_orthonormal} is not orthonormal, should fail orthogonal check")
 
     mat_mirrored = make_scale_matrix(2.0, -1.2)
     if not check_is_mirrored(mat_mirrored):
-        raise ValueError(f"Matrix {mat} is mirrored")
+        raise ValueError(f"Matrix {mat_mirrored} is mirrored, should return True")
 
     mat_skewed = make_scale_matrix(2.0, 1.2) @ make_rotation_matrix(0.25)
-    if check_preserves_angles(mat_skewed):
-        raise ValueError(f"Matrix {mat} does NOT preserve angles")
+    if  check_preserves_angles(mat_skewed):
+        raise ValueError(f"Matrix {mat_skewed} does NOT preserve angles, should return False")
 
     mat_is_ok = make_rotation_matrix(np.pi/3.0) @ make_translation_matrix(0.2, -0.3) @ make_rotation_matrix(-np.pi/2.0) @ make_scale_matrix(0.2, 2.0)
     if check_is_mirrored(mat_is_ok):
-        raise ValueError(f"Matrix {mat_is_ok} is NOT mirrored")
+        raise ValueError(f"Matrix {mat_is_ok} is NOT mirrored, should return False")
     if not check_preserves_angles(mat_is_ok):
-        raise ValueError(f"Matrix {mat_is_ok} is angle-preserving")
+        raise ValueError(f"Matrix {mat_is_ok} is angle-preserving, should return True")
     if check_is_rotation(mat_is_ok):
-        raise ValueError(f"Matrix {mat_is_ok} is NOT orthonormal")
+        raise ValueError(f"Matrix {mat_is_ok} is NOT orthonormal, should return False")
 
     mat_is_ortho = make_rotation_matrix(np.pi/3.0) @ make_translation_matrix(0.2, -0.3) @ make_rotation_matrix(-np.pi/2.0)
     if not check_is_rotation(mat_is_ortho):
-        raise ValueError(f"Matrix {mat_is_ortho} is orthonormal")
+        raise ValueError(f"Matrix {mat_is_ortho} is orthonormal, should return True")
 
     return True
 
@@ -474,7 +474,7 @@ def example_weird_geometry():
     fig, axs = plt.subplots(1, 2, figsize=(8, 4))
 
     # TODO: Make seq_mirrored so that the x,y axes are flipped. Draw the the flipped geometry
-    #   at 2.5 2.5 (see figure in slides)
+    #   at 2.5 2.5 (see mirrored figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
 # YOUR CODE HERE
 
     mat = make_matrix_from_sequence(seq_mirrored)
@@ -483,7 +483,7 @@ def example_weird_geometry():
     plot_zigzag(axs[0], mat)
 
     # TODO: Make seq_skew so that the axes (red blue) are no longer 90 degrees. There are multiple solutions to this, btw.
-    #  Draw the the flipped geometry at 2.5 2.5 (see figure in slides)
+    #  Draw the the flipped geometry at 2.5 2.5 (see skewed figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
 # YOUR CODE HERE
 
     mat = make_matrix_from_sequence(seq_skew)

@@ -5,10 +5,13 @@
 # We'll do kmeans as a stand-alone, 2D data cluster followed by using kmeans to segment an image
 
 # There are no shortage of kmeans implementations out there - using scipy's
+import matplotlib.colors
 import numpy as np
 from scipy.cluster.vq import kmeans, vq, whiten
+import imageio
 from numpy.random import normal, uniform, randint
 import matplotlib.pyplot as plt
+from skimage.color import rgb2hsv
 
 
 def make_n_clusters(n_clusters, n_data_pts):
@@ -52,7 +55,37 @@ def find_cluster_centers(data, n_clusters):
     ids = vq(data_normalized, centers[0])
 
 
+def read_and_cluster_image(image_name, use_hsv, n_clusters):
+    """ Read in the image, cluster it, and draw it and the clustered image
+    @image_name - name of image in Data
+    @use_hsv - use hsv, y/n
+    @n_clusters - number of clusters (up to 6)"""
 
+    im = imageio.imread("Data/" + image_name)
+    im = im[:, :, 0:3]
+
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+    axs[0].imshow(im)
+
+    data = im.reshape((im.shape[0] * im.shape[1], im.shape[2]))
+    if use_hsv:
+        im = rgb2hsv(im)
+
+    data_normalized = whiten(data)
+    centers = kmeans(data_normalized, n_clusters)
+    ids = vq(data_normalized, centers[0])
+    im_clusters = np.zeros((im.shape[0] * im.shape[1], 3), dtype=im.dtype)
+
+    rgb_color = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0], [0, 255, 255], [255, 0, 255]]
+    rgb_center = np.mean(data, axis=0)
+    rgb_scale = np.std(data, axis=0)
+    for c in range(0, n_clusters):
+        center = centers[0][:][c]
+        cluster_col = np.transpose(center) * rgb_scale + rgb_center
+        im_clusters[ids[0] == c, 0:3] = rgb_color[c]
+
+    im_clusters = im_clusters.reshape((im.shape[0], im.shape[1], 3))
+    axs[1].imshow(im_clusters)
 
 def run_2d_test():
     fig, axs = plt.subplots(1, 2, figsize=(8, 4))
@@ -60,5 +93,6 @@ def run_2d_test():
     plot_clusters_and_data(axs[0], centers, data, ids)
 
 if __name__ == '__main__':
-    run_2d_test()
+    read_and_cluster_image("staged_apple.png", True, 3)
+    # run_2d_test()
     print("done")
