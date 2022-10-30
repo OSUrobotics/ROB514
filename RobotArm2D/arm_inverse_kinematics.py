@@ -2,7 +2,6 @@
 
 # The usual imports
 import numpy as np
-import matplotlib.pyplot as plt
 
 # --------------------------- Inverse Kinematics ------------------
 # The goal of this part of the assignment is to move the grasp point to a target position.
@@ -16,8 +15,8 @@ import matplotlib.pyplot as plt
 #
 
 import matrix_transforms as mt
-from objects_in_world import read_object, plot_object_in_world_coord_system
-import arm_forward_kinematics as afk
+from RobotArm2D import arm_forward_kinematics as afk
+
 
 # -------------------- Distance calculation --------------------
 # Whether you're doing gradient descent or IK, you need to know the vector and/or distance from the current
