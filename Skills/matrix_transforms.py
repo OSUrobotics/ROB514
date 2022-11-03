@@ -344,9 +344,12 @@ def test_checks(b_print=False):
     if check_is_rotation(mat_is_ok):
         raise ValueError(f"Matrix {mat_is_ok} is NOT orthonormal, should return False")
 
-    mat_is_ortho = make_rotation_matrix(np.pi/3.0) @ make_translation_matrix(0.2, -0.3) @ make_rotation_matrix(-np.pi/2.0)
+    mat_is_ortho = make_rotation_matrix(np.pi/3.0) @ make_rotation_matrix(-np.pi/2.0)
+    mat_is_not_ortho = make_rotation_matrix(np.pi/3.0) @ make_translation_matrix(0.2, -0.3) @ make_rotation_matrix(-np.pi/2.0)
     if not check_is_rotation(mat_is_ortho):
         raise ValueError(f"Matrix {mat_is_ortho} is orthonormal, should return True")
+    if check_is_rotation(mat_is_not_ortho):
+        raise ValueError(f"Matrix {mat_is_not_ortho} is NOT orthonormal, should return False")
 
     return True
 
