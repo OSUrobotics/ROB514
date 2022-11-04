@@ -2,63 +2,83 @@
 
 # This assignment introduces you to a common task (creating a segmentation mask) and a common tool (kmeans) for
 #  doing clustering of data and the difference in color spaces.
-# We'll do kmeans as a stand-alone, 2D data cluster followed by using kmeans to segment an image
 
 # There are no shortage of kmeans implementations out there - using scipy's
 import numpy as np
 from scipy.cluster.vq import kmeans, vq, whiten
-from numpy.random import normal, uniform, randint
+
+# Using imageio to read in the images and skimage to do the color conversion
+import imageio
+from skimage.color import rgb2hsv
 import matplotlib.pyplot as plt
 
 
-def make_n_clusters(n_clusters, n_data_pts):
-    """ Use a normal distribution to create a bunch of samples around a few clusters (all 2d)
-     @param n_clusters - how many cluster centers to use
-     @param n_data_pts - how many data points, total, to generate
-     @returns cluster centers, data points, center data point came from, as numpy arrays"""
+def read_and_cluster_image(image_name, use_hsv, n_clusters):
+    """ Read in the image, cluster the pixels by color (either rgb or hsv), then
+    draw the clusters as an image mask, colored by both a random color and the center
+    color of the cluster
+    @image_name - name of image in Data
+    @use_hsv - use hsv, y/n
+    @n_clusters - number of clusters (up to 6)"""
 
-    centers = uniform(0, 1, (n_clusters, 2))
-    data = np.zeros((n_data_pts, 2))
-    ids = np.zeros(n_data_pts, dtype=int)
-    for i in range(0, n_data_pts):
-        # Randomly pick a cluster
-        ids[i] = randint(0, n_clusters)
-        data[i, :] = normal(centers[ids[i]], [0.2, 0.175])
+    # Read in the file
+    im_orig = imageio.imread("Data/" + image_name)
+    # Make sure you just have rgb (for those images with an alpha channel)
+    im_orig = im_orig[:, :, 0:3]
 
-    return centers, data, ids
+    # The plot to put the images in
+    fig, axs = plt.subplots(1, 3, figsize=(12, 4))
 
+    # Make name for the image from the input parameters
+    str_im_name = image_name.split('.')[0] + " "
+    if use_hsv:
+        str_im_name += "HSV"
+    else:
+        str_im_name += "RGB"
 
-def plot_clusters_and_data(axs, centers, data, ids):
-    """ Plot the data so we can check that it looks ok
-    @param centers - the center locations of the data
-    @param data - the actual data"""
-    cols = ["salmon", "green", "goldenrod", "magenta", "green", "grey"]
-    cols_x = ["darksalmon", "darkgreen", "darkgoldenrod", "darkmagenta", "darkgreen", "darkgrey"]
-    for i in range(0, centers.shape[0]):
-        axs.scatter(data[ids == i, 0], data[ids == i, 1], marker='.', color=cols[i])
+    str_im_name += f", k={n_clusters}"
 
-    for i in range(0, centers.shape[0]):
-        axs.plot(centers[i][0], centers[i][1], marker='X', color="black", markersize='6')
-        axs.plot(centers[i][0], centers[i][1], marker='X', color=cols_x[i], markersize='5')
-    axs.axis("equal")
+    # This is how you draw an image in a matplotlib figure
+    axs[0].imshow(im_orig)
+    # This sets the title
+    axs[0].set_title(str_im_name)
 
+    # TODO
+    # Step 1: If use_hsv is true, convert the image to hsv (see skimage rgb2hsv - skimage has a ton of these
+    #  conversion routines)
+    # Step 2: reshape the data to be an nx3 matrix
+    #   kmeans assumes each row is a data point. So you have to give it a (widthXheight) X 3 matrix, not the image
+    #   data as-is (WXHX3). See numpy reshape.
+    # Step 3: Whiten the data
+    # Step 4: Call kmeans with the whitened data to get out the centers
+    #   Note: kmeans returns a tuple with the centers in the first part and the overall fit in the second
+    # Step 5: Get the ids out using vq
+    #   This also returns a tuple; the ids for each pixel are in the first part
+    #   You might find the syntax data[ids == i, 0:3] = rgb_color[i] useful - this gets all the data elements
+    #     with ids with value i and sets them to the color in rgb_color
+    # Step 5: Create a mask image, and set the colors by rgb_color[ id for pixel ]
+    # Step 6: Create a second mask image, setting the color to be the average color of the cluster
+    #    Two ways to do this
+    #       1) "undo" the whitening step on the returned cluster (harder)
+    #       2) Calculate the means of the clusters in the original data
+    #           np.mean(data[ids == c])
+    #
+    # Step 7: use rgb2hsv to handle the hsv option
+    #   Simplest way to do this: Copy the code you did before and re-do after converting to hsv first
+    #     Don't forget to take the color centers in the *original* image, not the hsv one
+    #     Don't forget to rename your variables
+    #   More complicated: Make a function. Most of the code is the same, except for a conversion to hsv at the beginning
 
-def find_cluster_centers(data, n_clusters):
-    """ Find the centers and assign IDs to the points
-    @param data - the data as a numpy array
-    @returns centers, ids for each data point"""
-    data_normalized = whiten(data)
-    centers = kmeans(data_normalized, n_clusters)
-    ids = vq(data_normalized, centers[0])
-
-
-
-
-def run_2d_test():
-    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
-    centers, data, ids = make_n_clusters(4, 1000)
-    plot_clusters_and_data(axs[0], centers, data, ids)
+    # An array of some default color values to use for making the rgb mask image
+    rgb_color = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0], [0, 255, 255], [255, 0, 255]]
+# YOUR CODE HERE
+    axs[1].set_title("ID colored by rgb")
+    axs[2].set_title("ID colored by cluster average")
 
 if __name__ == '__main__':
-    run_2d_test()
+    read_and_cluster_image("real_apple.jpg", True, 4)
+    read_and_cluster_image("trees.png", True, 2)
+    read_and_cluster_image("trees_depth.png", False, 3)
+    read_and_cluster_image("staged_apple.png", True, 3)
+    read_and_cluster_image("staged_apple.png", False, 3)
     print("done")

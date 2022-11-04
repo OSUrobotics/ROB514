@@ -1,74 +1,16 @@
 #!/usr/bin/env python3
 
 # Get the windowing packages
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGroupBox, QSlider, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGroupBox, QVBoxLayout, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt, QSize
 
-from PyQt5.QtGui import QPainter, QBrush, QPen, QFont, QColor
+from PyQt5.QtGui import QPainter, QPen, QFont, QColor
 
 from random import random
 
 import numpy as np
-from numpy import sin, cos, pi
-
-
-# A helper class that implements a slider with given start and end value; displays values
-class SliderDisplay(QWidget):
-    gui = None
-
-    def __init__(self, name, low, high, initial_value, ticks=500):
-        """
-        Give me a name, the low and high values, and an initial value to set
-        :param name: Name displayed on slider
-        :param low: Minimum value slider returns
-        :param high: Maximum value slider returns
-        :param initial_value: Should be a value between low and high
-        :param ticks: Resolution of slider - all sliders are integer/fixed number of ticks
-        """
-        # Save input values
-        self.name = name
-        self.low = low
-        self.range = high - low
-        self.ticks = ticks
-
-        # I'm a widget with a text value next to a slider
-        QWidget.__init__(self)
-        layout = QHBoxLayout()
-        self.setLayout(layout)
-
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(ticks)
-        # call back - calls change_value when slider changed/moved
-        self.slider.valueChanged.connect(self.change_value)
-
-        # For displaying the numeric value
-        self.display = QLabel()
-        self.set_value(initial_value)
-        self.change_value()
-
-        layout.addWidget(self.display)
-        layout.addWidget(self.slider)
-
-    # Use this to get the value between low/high
-    def value(self):
-        """Return the current value of the slider"""
-        return (self.slider.value() / self.ticks) * self.range + self.low
-
-    # Called when the value changes - resets display text
-    def change_value(self):
-        if SliderDisplay.gui:
-            SliderDisplay.gui.repaint()
-        self.display.setText('{0}: {1:.3f}'.format(self.name, self.value()))
-
-    # Use this to change the value (does clamping)
-    def set_value(self, value_f):
-        """Set the value of the slider
-        @param value_f: value between low and high - clamps if not"""
-        value_tick = self.ticks * (value_f - self.low) / self.range
-        value_tick = min(max(0, value_tick), self.ticks)
-        self.slider.setValue(int(value_tick))
-        self.display.setText('{0}: {1:.3f}'.format(self.name, self.value()))
+from gui_sliders import SliderFloatDisplay
+from RobotArm2D import arm_forward_kinematics as afk, arm_inverse_kinematics as aik
 
 
 # The main class for handling the robot drawing and geometry
@@ -90,9 +32,10 @@ class DrawRobot(QWidget):
         self.width = 500
         self.height = 500
 
-        # For doing dictionaries
-        self.components = ['upperarm', 'forearm', 'wrist', 'finger1', 'finger2']
-        # Set geometry
+        # The geometry from the arm_forward_kinematics.py file
+        self.arm_angles, self.arm_with_angles = self.build_arm_and_angles()
+
+        # Set size of window
         self.init_ui()
 
     def init_ui(self):
@@ -124,150 +67,131 @@ class DrawRobot(QWidget):
         qp.setFont(QFont('Decorative', 10))
         qp.drawText(event.rect(), Qt.AlignBottom, self.text)
 
-    # Map from [0,1]x[0,1] to the width and height of the window
+    # Map from [-0.5,1]x[0.5,1] to the width and height of the window
     def x_map(self, x):
-        return int(x * self.width)
+        return int((x+0.5) * self.width)
 
     # Map from [0,1]x[0,1] to the width and height of the window - need to flip y
     def y_map(self, y):
         return self.height - int(y * self.height) - 1
 
-    # Draw a + where the target is and another where the end effector is
+    # Draw a + where the target is and another where the gripper grasp is
     def draw_target(self, qp):
-        pen = QPen(Qt.darkGreen, 2, Qt.SolidLine)
+        pen = QPen(Qt.darkRed, 2, Qt.SolidLine)
         qp.setPen(pen)
         x_i = self.x_map(self.gui.reach_x.value())
         y_i = self.y_map(self.gui.reach_y.value())
         qp.drawLine(x_i-5, y_i, x_i+5, y_i)
         qp.drawLine(x_i, y_i-5, x_i, y_i+5)
 
-        pt = self.arm_end_pt()
-        pen.setColor(Qt.darkRed)
+    def draw_arm_end_pt(self, x, y, vx, vy, qp):
+        pen = QPen(Qt.darkGreen, 2, Qt.SolidLine)
         qp.setPen(pen)
 
-        x_i = self.x_map(pt[0])
-        y_i = self.y_map(pt[1])
+        x_i = self.x_map(x)
+        y_i = self.y_map(y)
         qp.drawLine(x_i-5, y_i, x_i+5, y_i)
         qp.drawLine(x_i, y_i-5, x_i, y_i+5)
+        vx_i = self.x_map(x + 0.2 * vx)
+        vy_i = self.y_map(y + 0.2 * vy)
+        qp.drawLine(x_i, y_i, vx_i, vy_i)
 
-    # Make a rectangle with the center at the middle of the left hand edge
-    # Width is 1/4 length
-    # returns four corners with points as row vectors
-    @staticmethod
-    def make_rect(in_len):
-        """Draw a rectangle of the given length; width is 1/4 of length
-        @param: in_len desired length
-        @return: a 1x4 array of x,y values representing the four corners of the rectangle"""
-        x_l = 0
-        x_r = in_len
-        h = in_len/4
-        y_b = -h/2
-        y_t = y_b + h
-        return [[x_l, y_b, 1], [x_r, y_b, 1], [x_r, y_t, 1], [x_l, y_t, 1]]
-
-    # Apply the matrix m to the points in rect
-    @staticmethod
-    def transform_rect(rect, m):
-        """Apply the 3x3 transformation matrix to the rectangle
-        @param: rect: Rectangle from make_rect
-        @param: m - 3x3 matrix
-        @return: a 1x4 array of x,y values of the transformed rectangle"""
-        rect_t = []
-        for p in rect:
-            p_new = m @ np.transpose(p)
-            rect_t.append(np.transpose(p_new))
-        return rect_t
-
-    # Create a rotation matrix
-    @staticmethod
-    def rotation_matrix(theta):
-        """Create a 3x3 rotation matrix that rotates in the x,y plane
-        @param: theta - amount to rotate by in radians
-        @return: 3x3 matrix, 2D rotation plus identity """
-        m_rot = np.identity(3)
-        m_rot[0][0] = cos(theta)
-        m_rot[0][1] = -sin(theta)
-        m_rot[1][0] = sin(theta)
-        m_rot[1][1] = cos(theta)
-        return m_rot
-
-    # Create a translation matrix
-    @staticmethod
-    def translation_matrix(dx, dy):
-        """Create a 3x3 translation matrix that moves by dx, dy
-        @param: dx - translate by that much in x
-        @param: dy - translate by that much in y
-        @return: 3x3 matrix """
-        m_trans = np.identity(3)
-        m_trans[0, 2] = dx
-        m_trans[1, 2] = dy
-        return m_trans
+    # Draw a line on the screen
+    def draw_line(self, qp, x, y, xnext, ynext):
+        """ Map (0,1) X (0,1) to (0,H) X (W,0) """
+        qp.drawLine(self.x_map(x), self.y_map(y), self.x_map(xnext), self.y_map(ynext))
 
     # Draw the given box
-    def draw_rect(self, rect, qp):
-        pen = QPen(Qt.black, 2, Qt.SolidLine)
+    def draw_obj(self, obj, in_matrix, qp):
+        """ Draw an obj - the same as object_in-world plot_object_in_world_coord_system"""
+        pen_color = Qt.black
+        if obj["Color"] == "darkturquoise":
+            pen_color = Qt.darkCyan
+        elif obj["Color"] == "darkgoldenrod":
+            pen_color = Qt.darkYellow
+        elif obj["Color"] == "darkgreen":
+            pen_color = Qt.darkGreen
+        pen = QPen(pen_color, 2, Qt.SolidLine)
         qp.setPen(pen)
 
-        for i in range(0, len(rect)):
-            i_next = (i+1) % len(rect)
-            x_i = self.x_map(rect[i][0])
-            y_i = self.y_map(rect[i][1])
-            x_i_next = self.x_map(rect[i_next][0])
-            y_i_next = self.y_map(rect[i_next][1])
-            qp.drawLine(x_i, y_i, x_i_next, y_i_next)
+        matrix = in_matrix
+        if in_matrix is None:
+            matrix = np.identity(3)
 
-    # Return the matrices that move each of the components. Do this as a dictionary, just to be clean
-    def get_matrices(self):
-        # The values used to build the matrices
-        len_upper_arm = self.gui.length_upper_arm.value()
-        len_forearm = self.gui.length_lower_arm.value()
-        len_wrist = self.gui.length_lower_arm.value() / 4
-        len_finger = self.gui.length_fingers.value()
-        h_forearm = len_forearm/4
-        ang_shoulder = self.gui.theta_base.value()
-        ang_elbow = self.gui.theta_elbow.value()
-        ang_wrist = self.gui.theta_wrist.value()
-        ang_finger = self.gui.theta_fingers.value()
+        # This multiplies the matrix by the points
+        pts_in_world = matrix @ obj["Matrix"] @ obj["Pts"]
 
-        mat_ret = dict()
+        for i in range(0, pts_in_world.shape[1]-1):
+            i_next = i+1
+            self.draw_line(qp, pts_in_world[0, i], pts_in_world[1, i], pts_in_world[0, i_next], pts_in_world[1, i_next])
 
-        # begin homework 1 : Problem 2
-        # Each of these should be of the form: Translation * rotation
-        # end homework 1 : Problem 2
-        return mat_ret
+    def build_arm_and_angles(self):
+        """ Build the arm from the current sliders (lengths and angles).
+        This is computationally wasteful, but it gets around the problem of the arm and sliders being out of sync
+        @return Angles and arm geometry"""
+        base_size_param = (0.25, 0.125)
+        link_sizes_param = []
+        for l in self.gui.length_slds[0:3]:
+            link_sizes_param.append((l.value(), 0.25 * l.value()))
+        palm_width_param = self.gui.length_slds[3].value()
+        finger_size_param = (self.gui.length_slds[4].value(), 0.25 * self.gui.length_slds[4].value())
+
+        # This function calls each of the set_transform_xxx functions, and puts the results
+        # in a list (the gripper - the last element - is a list)
+        arm_geometry = afk.create_arm_geometry(base_size_param, link_sizes_param, palm_width_param, finger_size_param)
+
+        angles_for_arm = []
+        # Get the angles for the links
+        for l in self.gui.theta_slds[0:-3]:
+            angles_for_arm.append(l.value())
+
+        # Now the angles for the gripper
+        angles_for_arm.append([self.gui.theta_slds[-3].value(), self.gui.theta_slds[-2].value(), self.gui.theta_slds[-1].value()])
+        afk.set_angles_of_arm_geometry(arm_geometry, angles_for_arm)
+        return angles_for_arm, arm_geometry
+
+    def set_slider_values_from_angles(self, angles_for_arm):
+        """Set all the sliders from the angles
+        @param angles_for_arm - the link angles plus the wrist/finger"""
+        # Get the angles for the links
+        for a, l in zip(angles_for_arm[:-1], self.gui.theta_slds[0:-3]):
+            l.set_value(a)  # Set the slider to the angle
+
+        # Now the angles for the gripper
+        gripper_angles = angles_for_arm[-1]
+        # Wrist
+        self.gui.theta_slds[-3].set_value(gripper_angles[0])
+        # Fingers
+        self.gui.theta_slds[-2].set_value(gripper_angles[1])
+        self.gui.theta_slds[-1].set_value(gripper_angles[2])
 
     def draw_arm(self, qp):
-        """Draw the arm as boxes
-        :param: qp - the painter window
+        """ Get the current angles from the sliders then set the matrices then draw
+        @param: qp - the painter window
         """
-        pen = QPen(Qt.black, 2, Qt.SolidLine)
-        qp.setPen(pen)
 
-        # Create a rectangle for each component then move it to the correct place then draw it
-        rects = dict()
-        rects['upperarm'] = self.make_rect(self.gui.length_upper_arm.value())
-        rects['forearm'] = self.make_rect(self.gui.length_lower_arm.value())
-        rects['wrist'] = self.make_rect(self.gui.length_lower_arm.value() / 4)
-        rects['finger1'] = self.make_rect(self.gui.length_fingers.value())
-        rects['finger2'] = self.make_rect(self.gui.length_fingers.value())
-        h_wrist = 0.75 * self.gui.length_lower_arm.value()/4
+        self.arm_angles, self.arm_with_angles = self.build_arm_and_angles()
+        matrices = afk.get_matrices_all_links(self.arm_with_angles)
 
-        # begin homework 1 : Problem 2
-        # Transform and draw each component using the matrices in self.get_matrices()
-        # Example call:
-        #   rect_transform = self.transform_rect(rects['base'], mat)
-        #   self.draw_rect(rect_transform, qp)
-            #   getting the translation matrix for upper arm: matrices['upperarm' + '_T']
-        # end homework 1 : Problem 2
+        # Now draw - essentially arm_forward_kinematics plot_complete_arm
+        for i, component in enumerate(self.arm_with_angles[:-1]):
+            self.draw_obj(component, matrices[i] @ afk.get_rotation_link(component), qp)
 
-    def arm_end_pt(self):
-        """ Return the end point of the arm"""
-        matrices = self.get_matrices()
-        mat_accum = np.identity(3)
-        # begin homework 1 : Problem 2 (second part)
-        # end homework 1 : Problem 2 (second part)
-        pt_end = mat_accum[0:2, 2]
-        return pt_end
+        gripper = self.arm_with_angles[-1]
+
+        # The palm
+        wrist_rotation = afk.get_rotation_link(gripper[0])
+        self.draw_obj(gripper[0], matrices[-1] @ wrist_rotation, qp)
+
+        for finger in gripper[1:3]:
+            self.draw_obj(finger, matrices[-1] @ wrist_rotation @ afk.get_matrix_finger(finger), qp)
+
+        # Draw the gripper grasp point
+        x, y = afk.get_gripper_location(self.arm_with_angles)
+
+        # ... and orientation
+        vx, vy = afk.get_gripper_orientation(self.arm_with_angles)
+        self.draw_arm_end_pt(x, y, vx, vy, qp)
 
 
 class RobotArmGUI(QMainWindow):
@@ -287,41 +211,43 @@ class RobotArmGUI(QMainWindow):
         reach_jacobian_button.clicked.connect(self.reach_jacobian)
 
         reaches = QGroupBox('Reaches')
-        reaches_layout = QVBoxLayout()
+        reaches_layout = QHBoxLayout()
         reaches_layout.addWidget(reach_gradient_button)
         reaches_layout.addWidget(reach_jacobian_button)
         reaches.setLayout(reaches_layout)
 
         # The parameters of the robot arm we're simulating
-        parameters = QGroupBox('Arm parameters')
-        parameter_layout = QVBoxLayout()
-        self.theta_base = SliderDisplay('Angle base', -np.pi/2, np.pi/2, 0)
-        self.theta_elbow = SliderDisplay('Angle elbow', -np.pi/2, np.pi/2, 0)
-        self.theta_wrist = SliderDisplay('Angle wrist', -np.pi/2, np.pi/2, 0)
-        self.theta_fingers = SliderDisplay('Angle fingers', -np.pi/4, 0, -np.pi/8)
-        self.length_upper_arm = SliderDisplay('Length upper arm', 0.2, 0.4, 0.3)
-        self.length_lower_arm = SliderDisplay('Length lower arm', 0.1, 0.2, 0.15)
-        self.length_fingers = SliderDisplay('Length fingers', 0.05, 0.1, 0.075)
+        parameters_len = QGroupBox('Arm lengths')
+        parameter_len_layout = QVBoxLayout()
+
+        parameters_ang = QGroupBox('Arm angles')
+        parameter_ang_layout = QVBoxLayout()
+
         self.theta_slds = []
-        self.theta_slds.append(self.theta_base)
-        self.theta_slds.append(self.theta_elbow)
-        self.theta_slds.append(self.theta_wrist)
+        self.length_slds = []
+        component_names = ["Link 0", "Link 1", "Link 2", "Wrist", "Finger 1", "Finger 2"]
+        for n in component_names:
+            self.theta_slds.append(SliderFloatDisplay('Angle ' + n, -np.pi/2, np.pi/2, 0))
+            parameter_ang_layout.addWidget(self.theta_slds[-1])
 
-        parameter_layout.addWidget(self.theta_base)
-        parameter_layout.addWidget(self.theta_elbow)
-        parameter_layout.addWidget(self.theta_wrist)
-        parameter_layout.addWidget(self.theta_fingers)
-        parameter_layout.addWidget(self.length_upper_arm)
-        parameter_layout.addWidget(self.length_lower_arm)
-        parameter_layout.addWidget(self.length_fingers)
+        sldr_bds = (0.1, 0.3, 0.2)
+        scl_bds = 1.0
+        for n in component_names[0:-2]:
+            self.length_slds.append(SliderFloatDisplay('Length ' + n, sldr_bds[0] * scl_bds, sldr_bds[1] * scl_bds, sldr_bds[2] * scl_bds))
+            parameter_len_layout.addWidget(self.length_slds[-1])
+            scl_bds *= 0.8
 
-        parameters.setLayout(parameter_layout)
+        self.length_slds.append(SliderFloatDisplay('Length fingers', sldr_bds[0] * scl_bds, sldr_bds[1] * scl_bds, sldr_bds[2] * scl_bds))
+        parameter_len_layout.addWidget(self.length_slds[-1])
+
+        parameters_ang.setLayout(parameter_ang_layout)
+        parameters_len.setLayout(parameter_len_layout)
 
         # The point to reach to
         reach_point = QGroupBox('Reach point')
-        reach_point_layout = QVBoxLayout()
-        self.reach_x = SliderDisplay('x', 0, 1, 0.5)
-        self.reach_y = SliderDisplay('y', 0, 1, 0.5)
+        reach_point_layout = QHBoxLayout()
+        self.reach_x = SliderFloatDisplay('x', -0.5, 0.5, 0.5)
+        self.reach_y = SliderFloatDisplay('y', 0, 1, 0.5)
         random_button = QPushButton('Random')
         random_button.clicked.connect(self.random_reach)
         reach_point_layout.addWidget(self.reach_x)
@@ -344,7 +270,13 @@ class RobotArmGUI(QMainWindow):
         left_side_layout.addWidget(reaches)
         left_side_layout.addWidget(reach_point)
         left_side_layout.addStretch()
-        left_side_layout.addWidget(parameters)
+
+        parameters_both = QGroupBox('Arm parameters')
+        parameters_both_layout = QHBoxLayout()
+        parameters_both.setLayout(parameters_both_layout)
+        parameters_both_layout.addWidget(parameters_ang)
+        parameters_both_layout.addWidget(parameters_len)
+        left_side_layout.addWidget(parameters_both)
 
         right_side_layout.addWidget(self.robot_arm)
         right_side_layout.addWidget(quit_button)
@@ -352,7 +284,11 @@ class RobotArmGUI(QMainWindow):
         top_level_layout.addLayout(left_side_layout)
         top_level_layout.addLayout(right_side_layout)
 
-        SliderDisplay.gui = self
+        SliderFloatDisplay.gui = self
+
+    def update_simulation_parameters(self):
+        """ Redraw with angles, lengths"""
+        self.robot_arm.repaint()
 
     # generate a random reach point
     def random_reach(self):
@@ -362,54 +298,26 @@ class RobotArmGUI(QMainWindow):
 
     def reach_gradient(self):
         """Align the robot end point (palm) to the target point using gradient descent"""
+        # Where the target is (from the slider)
+        target = np.array([self.reach_x.value(), self.reach_y.value()])
+        # Do one step, and update the angles
 
-        # Use the text field to say what happened
-        self.robot_arm.text = "Not improved"
+        angles, arm_geometry = self.robot_arm.build_arm_and_angles()
+        new_angles = aik.gradient_descent(angles, arm_geometry, np.transpose(target), True)
 
-        # begin homework 2 : Problem 1
-        # Keep trying smaller increments while nothing improves
-            # calculate the current distance
-            # Try each angle in turn
-                # Gradient
-        # end homework 2 : Problem 1
+        if np.all(np.isclose(new_angles[0:-1], angles[0:-1])) and np.isclose(new_angles[-1][0], angles[-1][0]):
+            self.robot_arm.text = "Arm did not move"
+        else:
+            self.robot_arm.text = "Arm moved"
+            self.robot_arm.set_slider_values_from_angles(new_angles)
         self.robot_arm.repaint()
 
     def reach_jacobian(self):
-        """ Use the Jacobian to calculate the desired angle change"""
-
-        # An example problem of an arm with radius 3 currently at angle theta
-        radius = 3
-        theta = 0.2
-        # Vector to the end point
-        r = [radius * cos(theta), radius * sin(theta), 0]
-        # Spin around z
-        omega_hat = [0, 0, 1]
-        # always 0 in 3rd component
-        omega_cross_r = np.cross(omega_hat, r)
-        # Desired x,y change
-        dx_dy = np.zeros([2, 1])
-        dx_dy[0, 0] = -0.01
-        dx_dy[1, 0] = -0.1
-        # Jacobian
-        J = np.zeros([2, 1])
-        J[0:2, 0] = np.transpose(omega_cross_r[0:2])
-        # Solve
-        d_ang = np.linalg.lstsq(J, dx_dy, rcond=None)[0]
-        # Check result of solve - should be the same as dx_dy
-        res = J @ d_ang
-        # The actual point you end up at if you change the angle by that much
-        pt_new = [radius * cos(theta + d_ang), radius * sin(theta + d_ang)]
-
-        # begin homework 2 : Problem 2
-        # Desired change in x,y
-        # Use pseudo inverse to solve
-        # to set text
-        # self.robot_arm.text = text
-        # end homework 2 problem 2
+        """ Use the Jacobian to change the angles"""
         self.robot_arm.repaint()
 
     def draw(self, unused_data):
-        self.robot_arm.draw()
+        self.robot_arm.draw_arm()
 
 
 if __name__ == '__main__':
