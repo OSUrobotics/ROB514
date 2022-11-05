@@ -168,10 +168,10 @@ def solve_jacobian(jacobian, vx_vy):
     return delta_angles
 
 
-def jacobian_descent(arm, angles, target, b_one_step=True):
+def jacobian_follow_path(arm, angles, target, b_one_step=True):
     """
-    Use jacobian to calculate angles that move the grasp point towards target. Note that the flow of control is nearly
-      the same as the gradient descent
+    Use jacobian to calculate angles that move the grasp point towards target. Instead of taking 'big' steps we're
+    going to take small steps along the vector (because the Jacobian is only valid around the joint angles)
     @param arm - The arm geometry, as constructed in arm_forward_kinematics
     @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
     @param target - a 2x1 numpy array (x,y) that is the desired target point
@@ -180,7 +180,7 @@ def jacobian_descent(arm, angles, target, b_one_step=True):
             of iterations it took
     """
 
-    # Outer loop - keep going until no progress made
+    # Outer loop - move towards the target goal in steps of d_step
     #   Or - if b_one_step is True - stop after one loop
 
     # I like to use a boolean variable for this type of while loop, so you can track all of the places
@@ -197,14 +197,38 @@ def jacobian_descent(arm, angles, target, b_one_step=True):
     afk.set_angles_of_arm_geometry(arm, angles)
     best_distance = ik_gradient.distance_to_goal(arm, target)
     count_iterations = 0
+
+    d_step = 0.05
     while b_keep_going and count_iterations < 1000:
 
-        # TODO: Use the Jacobian to calculate angle changes that will move the end effector along vx, vy
+        # This is the vector to the target. Take maximum 0.05 of a step towards the target
+        vec_to_target = ik_gradient.vector_to_goal(arm, target)
+        vec_length = np.linalg.norm(vec_to_target)
+        if vec_length > d_step:
+            # Shorten the step
+            vec_to_target *= d_step / vec_length
+        elif np.isclose(vec_length, 0.0):
+            # we can stop now...
+            b_keep_going = False
+
+        # TODO: Use the Jacobian to calculate angle changes that will move the end effector along vec_to_target
         #  Do in two parts - calculate the jacobian (calculate_jacobian)
         #   then solve it (solve_jacobian) with the vector (ik_gradient.vector_to_goal)
         #  You can use calculate_jacobian OR calculate_jacobian_numerically
+
+        delta_angles = np.zeros(len(angles))
 # YOUR CODE HERE
 
+        # This rarely happens - but if the matrix is degenerate (the arm is in a straight line) then the angles
+        #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
+        #  just shortcuts the whole problem. There are far, far better ways to deal with this
+        avg_ang_change = np.linalg.norm(delta_angles)
+        if avg_ang_change > 100:
+            delta_angles *= 0.1 / avg_ang_change
+        elif avg_ang_change < 0.1:
+            delta_angles *= 0.1 / avg_ang_change
+
+        # Similar to gradient descent, don't move if this doesn't help
         # This is the while loop where you keep "shrinking" the step size until you get closer to the goal (if
         #  you ever do)
         # Again, use a Boolean to tag if you actually got better
@@ -303,19 +327,19 @@ if __name__ == '__main__':
 
     # ----------------- Do one step check ----------------------------
     # Main check - do we get out the new angles? Note, this assumes that you haven't changed up the step size
-    b_succ, angles_new, count = jacobian_descent(arm_geometry, angles_check, target, b_one_step=True)
-    ang_exp = [-1.483, 1.905, 0.2721, [-1.078, 0, 0]]
+    b_succ, angles_new, count = jacobian_follow_path(arm_geometry, angles_check, target, b_one_step=True)
+    ang_exp = [-0.0864, 0.8506, 0.01585, [-0.8024, 0, 0]]
     if not len(angles_new) == 4:
         print(f"Expected {ang_exp}, got {angles_new}")
     for a1, a2 in zip(angles_new, ang_exp):
         if not np.all(np.isclose(a1, a2, atol=0.01)):
-            print(f"Expected {a1} got {a2}")
+            print(f"Expected angle {a2} got {a1}")
     if not b_succ:
         print(f"Expected successful/improvement, got none")
 
     # ----------------- full solve check ----------------------------
     # Check the run until no improvement version
-    b_succ, angles_new, count = jacobian_descent(arm_geometry, angles_check, target, b_one_step=False)
+    b_succ, angles_new, count = jacobian_follow_path(arm_geometry, angles_check, target, b_one_step=False)
     afk.set_angles_of_arm_geometry(arm_geometry, angles_new)
     dist = ik_gradient.distance_to_goal(arm_geometry, target)
     if not b_succ:

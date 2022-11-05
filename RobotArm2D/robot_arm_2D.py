@@ -307,7 +307,10 @@ class RobotArmGUI(QMainWindow):
         angles, arm_geometry = self.robot_arm.build_arm_and_angles()
         old_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
         b_succ, new_angles, count = ik_gradient.gradient_descent(arm_geometry, angles, np.transpose(target), True)
-        afk.set_angles_of_arm_geometry(arm_geometry, new_angles)
+        if b_succ:
+            afk.set_angles_of_arm_geometry(arm_geometry, new_angles)
+        else:
+            afk.set_angles_of_arm_geometry(arm_geometry, angles)
         new_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
 
         if not b_succ:
@@ -325,11 +328,16 @@ class RobotArmGUI(QMainWindow):
 
         angles, arm_geometry = self.robot_arm.build_arm_and_angles()
         old_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
-        b_succ, new_angles, count = ik_jacobian.jacobian_descent(arm_geometry, angles, np.transpose(target), True)
+        b_succ, new_angles, count = ik_jacobian.jacobian_follow_path(arm_geometry, angles, np.transpose(target), True)
+        if b_succ:
+            afk.set_angles_of_arm_geometry(arm_geometry, new_angles)
+        else:
+            afk.set_angles_of_arm_geometry(arm_geometry, angles)
         new_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
 
         if np.all(np.isclose(new_angles[0:-1], angles[0:-1])) and np.isclose(new_angles[-1][0], angles[-1][0]):
             self.robot_arm.text = f"Arm did not move\ndist {old_dist:0.3}\ncount {count}"
+            self.robot_arm.set_slider_values_from_angles(angles)
         else:
             self.robot_arm.text = f"Arm moved\nold {old_dist:0.3} new {new_dist:0.3}\ncount {count}"
             self.robot_arm.set_slider_values_from_angles(new_angles)
