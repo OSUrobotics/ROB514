@@ -10,7 +10,9 @@ from random import random
 
 import numpy as np
 from gui_sliders import SliderFloatDisplay
-from RobotArm2D import arm_forward_kinematics as afk, arm_inverse_kinematics as aik
+import arm_forward_kinematics as afk
+import arm_ik_gradient as ik_gradient
+import arm_ik_jacobian as ik_jacobian
 
 
 # The main class for handling the robot drawing and geometry
@@ -63,8 +65,8 @@ class DrawRobot(QWidget):
 
     # Put some text in the bottom left
     def draw_text(self, event, qp):
-        qp.setPen(QColor(168, 34, 3))
-        qp.setFont(QFont('Decorative', 10))
+        qp.setPen(QColor(168, 84, 3))
+        qp.setFont(QFont('Decorative', 16))
         qp.drawText(event.rect(), Qt.AlignBottom, self.text)
 
     # Map from [-0.5,1]x[0.5,1] to the width and height of the window
@@ -303,17 +305,34 @@ class RobotArmGUI(QMainWindow):
         # Do one step, and update the angles
 
         angles, arm_geometry = self.robot_arm.build_arm_and_angles()
-        new_angles = aik.gradient_descent(angles, arm_geometry, np.transpose(target), True)
+        old_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
+        b_succ, new_angles, count = ik_gradient.gradient_descent(arm_geometry, angles, np.transpose(target), True)
+        afk.set_angles_of_arm_geometry(arm_geometry, new_angles)
+        new_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
 
-        if np.all(np.isclose(new_angles[0:-1], angles[0:-1])) and np.isclose(new_angles[-1][0], angles[-1][0]):
-            self.robot_arm.text = "Arm did not move"
+        if not b_succ:
+            self.robot_arm.text = f"Arm did not move\ndist {old_dist:0.3}\ncount {count}"
         else:
-            self.robot_arm.text = "Arm moved"
+            self.robot_arm.text = f"Arm moved\nold {old_dist:0.3} new {new_dist:0.3}\ncount {count}"
             self.robot_arm.set_slider_values_from_angles(new_angles)
         self.robot_arm.repaint()
 
     def reach_jacobian(self):
         """ Use the Jacobian to change the angles"""
+        # Where the target is (from the slider)
+        target = np.array([self.reach_x.value(), self.reach_y.value()])
+        # Do one step, and update the angles
+
+        angles, arm_geometry = self.robot_arm.build_arm_and_angles()
+        old_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
+        b_succ, new_angles, count = ik_jacobian.jacobian_descent(arm_geometry, angles, np.transpose(target), True)
+        new_dist = ik_gradient.distance_to_goal(arm_geometry, np.transpose(target))
+
+        if np.all(np.isclose(new_angles[0:-1], angles[0:-1])) and np.isclose(new_angles[-1][0], angles[-1][0]):
+            self.robot_arm.text = f"Arm did not move\ndist {old_dist:0.3}\ncount {count}"
+        else:
+            self.robot_arm.text = f"Arm moved\nold {old_dist:0.3} new {new_dist:0.3}\ncount {count}"
+            self.robot_arm.set_slider_values_from_angles(new_angles)
         self.robot_arm.repaint()
 
     def draw(self, unused_data):
