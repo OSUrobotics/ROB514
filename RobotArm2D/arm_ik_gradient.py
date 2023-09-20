@@ -282,4 +282,7 @@ if __name__ == '__main__':
     axs[0].set_title("Before gradient descent")
     axs[1].set_title(f"After gradient descent count {count} dist {dist:0.3}")
 
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("Done")

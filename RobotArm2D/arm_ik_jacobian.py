@@ -365,6 +365,9 @@ if __name__ == '__main__':
     axs[0].set_title("Before Jacobian descent")
     axs[1].set_title(f"After Jacobian descent count {count} dist {dist:0.2}")
 
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("Done")
 
 

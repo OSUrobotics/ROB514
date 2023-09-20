@@ -230,5 +230,8 @@ if __name__ == '__main__':
         objs.append(obj)
     plot_all(objs[0], objs[1:], None)
 
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("Done")
 

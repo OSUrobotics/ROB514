@@ -15,7 +15,8 @@
 #
 # This file is JUST matrices. Do it first.
 
-# Slides: https://docs.google.com/presentation/d/1nTexr-lPdkq3HW4ouzYTa9iEiO-6K7j5ihHvZqixIsM/edit?usp=sharing
+# Overview slides: https://docs.google.com/presentation/d/1nTexr-lPdkq3HW4ouzYTa9iEiO-6K7j5ihHvZqixIsM/edit?usp=sharing
+# Slides for this assignment: https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -476,20 +477,25 @@ def example_weird_geometry():
     # Make the plot that shows the difference between rotate-translate and translate-rotate
     fig, axs = plt.subplots(1, 2, figsize=(8, 4))
 
-    # TODO: Make seq_mirrored so that the x,y axes are flipped. Draw the the flipped geometry
-    #   at 2.5 2.5 (see mirrored figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
+    # TODO: Make seq_mirrored so that the x,y axes are flipped, and the x axis is twice as big as it was before.
+    #  Draw the the flipped geometry at 2.5 2.5
+    #  (see mirrored figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
+    # Should be a scale followed by a translate
 # YOUR CODE HERE
 
     mat = make_matrix_from_sequence(seq_mirrored)
+    # print(f"{mat}")
     axs[0].set_title("Mirrored")
     plot_axes_and_circle(axs[0], mat)
     plot_zigzag(axs[0], mat)
 
     # TODO: Make seq_skew so that the axes (red blue) are no longer 90 degrees. There are multiple solutions to this, btw.
+    #  One of the simplest is to rotate then scale x differently than y
     #  Draw the the flipped geometry at 2.5 2.5 (see skewed figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
 # YOUR CODE HERE
 
     mat = make_matrix_from_sequence(seq_skew)
+    # print(f"{mat}")
     axs[1].set_title("Skewed")
     plot_axes_and_circle(axs[1], mat)
     plot_zigzag(axs[1], mat)
@@ -555,5 +561,8 @@ if __name__ == '__main__':
     # Object not where you expect it to be
     example_uncentered_geometry()
 
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("Done")
 

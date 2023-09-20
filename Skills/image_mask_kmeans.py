@@ -63,7 +63,7 @@ def read_and_cluster_image(image_name, use_hsv, n_clusters):
     #       2) Calculate the means of the clusters in the original data
     #           np.mean(data[ids == c])
     #
-    # Step 7: use rgb2hsv to handle the hsv option
+    # Note: To do the HSV option, get the RGB version to work. Then go back and do the HSV one
     #   Simplest way to do this: Copy the code you did before and re-do after converting to hsv first
     #     Don't forget to take the color centers in the *original* image, not the hsv one
     #     Don't forget to rename your variables
@@ -75,10 +75,14 @@ def read_and_cluster_image(image_name, use_hsv, n_clusters):
     axs[1].set_title("ID colored by rgb")
     axs[2].set_title("ID colored by cluster average")
 
+
 if __name__ == '__main__':
     read_and_cluster_image("real_apple.jpg", True, 4)
     read_and_cluster_image("trees.png", True, 2)
     read_and_cluster_image("trees_depth.png", False, 3)
     read_and_cluster_image("staged_apple.png", True, 3)
     read_and_cluster_image("staged_apple.png", False, 3)
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("done")

@@ -387,4 +387,7 @@ if __name__ == '__main__':
 
 # YOUR CODE HERE
 
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
     print("done")

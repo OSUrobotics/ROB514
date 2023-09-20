@@ -121,6 +121,7 @@ def set_transform_finger(obj_wedge, palm_width, finger_size, b_is_top):
 
 def create_gripper(palm_width, finger_size):
     """ Make a gripper from a palm and two fingers
+    Palm is centered on the x and y axis, base of finger will be at 0, 1/2 palm width
     @param palm_width - the desired separation of the two fingers
     @param finger_size - how long and wide to make the finger
     @return the modified object"""
@@ -215,6 +216,7 @@ def get_matrix_base(base_link):
     #    Reminder: mt.get_xx_from_matrix is helpful here...
     #    Rotate first, then translate
 # YOUR CODE HERE
+    return np.identity(3)
 
 
 def get_rotation_link(arm_link):
@@ -224,6 +226,7 @@ def get_rotation_link(arm_link):
 
     # TODO Create a rotation matrix based on the link's angle (stored with the key "Angle")
 # YOUR CODE HERE
+    return np.identity(3)
 
 
 def get_matrix_link(arm_link):
@@ -239,6 +242,7 @@ def get_matrix_link(arm_link):
     #    Reminder: mt.get_xx_from_matrix is helpful here...
     #    Rotate first, then translate
 # YOUR CODE HERE
+    return np.identity(3)
 
 
 def get_matrices_all_links(arm_with_angles):
@@ -475,4 +479,9 @@ if __name__ == '__main__':
     # Now actually plot - when you do the gripper grasp location (step 4) it will show up here
     fig2, axs2 = plt.subplots(1, 1, figsize=(8, 8))
     plot_complete_arm(axs2, arm_geometry, matrices)
+
+    # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
+    # windows to show
+    plt.show()
+
     print("Done")
