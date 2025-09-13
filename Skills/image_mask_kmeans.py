@@ -71,7 +71,7 @@ def read_and_cluster_image(image_name, use_hsv, n_clusters):
 
     # An array of some default color values to use for making the rgb mask image
     rgb_color = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0], [0, 255, 255], [255, 0, 255]]
-# YOUR CODE HERE
+    # YOUR CODE HERE
     axs[1].set_title("ID colored by rgb")
     axs[2].set_title("ID colored by cluster average")
 

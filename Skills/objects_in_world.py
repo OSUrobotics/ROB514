@@ -116,7 +116,7 @@ def get_pts_as_numpy_array(obj):
     @param obj - the object
     @return numpy array of XYs"""
     pts = None
-# YOUR CODE HERE
+    # YOUR CODE HERE
     return pts
 
 

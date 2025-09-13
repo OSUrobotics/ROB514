@@ -1,6 +1,9 @@
 /Skills/zips/
 /Shell_code_ROS/.idea/
 
+/zips
+*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

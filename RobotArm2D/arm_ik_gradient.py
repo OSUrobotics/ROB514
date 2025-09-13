@@ -34,7 +34,7 @@ def vector_to_goal(arm_with_angles, target):
     # TODO:
     #   Get the gripper/grasp location using get_gripper_location
     #   Calculate and return the vector
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 def distance_to_goal(arm_with_angles, target):
@@ -49,7 +49,7 @@ def distance_to_goal(arm_with_angles, target):
     """
 
     # TODO: Call the function above, then return the vector's length
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 def calculate_gradient(arm, angles, target):
@@ -77,7 +77,7 @@ def calculate_gradient(arm, angles, target):
     #   Calculate (f(x+h) - f(x)) / h and append that to the derivs list
     # Step 3: Do the wrist/gripper angle the same way (but remember, that angle
     #   is stored in angles[-1][0])
-# YOUR CODE HERE
+    # YOUR CODE HERE
     return derivs
 
 
@@ -119,7 +119,7 @@ def gradient_descent(arm, angles, target, b_one_step=True) -> tuple:
     while b_keep_going and count_iterations < 1000:
         # First, calculate the gradiant with the current angles
         # TODO: Calculate the gradient with angles (don't for get to set the angles first)
-# YOUR CODE HERE
+        # YOUR CODE HERE
 
         # This is the while loop where you keep "shrinking" the step size until you get closer to the goal (if
         #  you ever do)
@@ -138,7 +138,7 @@ def gradient_descent(arm, angles, target, b_one_step=True) -> tuple:
             #  Calculate what the new distance would be with those angles
             #  We go in the OPPOSITE direction of the gradient because we want to DECREASE distance
             new_angles = []
-# YOUR CODE HERE
+            # YOUR CODE HERE
 
             # Now we see how we did
             afk.set_angles_of_arm_geometry(arm, new_angles)
@@ -149,7 +149,7 @@ def gradient_descent(arm, angles, target, b_one_step=True) -> tuple:
             #   Otherwise, set b_took_one_step to True (this will break out of the loop) and
             #     set angles to be new_angles and best_distance to be new_distance
             #     set b_found_better to be True
-# YOUR CODE HERE
+            # YOUR CODE HERE
             # Count iterations
             count_iterations += 1
 

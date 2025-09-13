@@ -9,6 +9,14 @@ from PyQt5.QtGui import QPainter, QPen, QFont, QColor
 from random import random
 
 import numpy as np
+# This bit of crazy code ensures that we can access the files in Week_5_matrices
+import os 
+import sys
+if "GUI" not in sys.path:
+    save_path = os.getcwd()
+    os.chdir("..")
+    sys.path.append(f'{os.getcwd()}/GUI')
+    os.chdir(save_path)
 from gui_sliders import SliderFloatDisplay
 import arm_forward_kinematics as afk
 import arm_ik_gradient as ik_gradient

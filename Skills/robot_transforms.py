@@ -67,7 +67,7 @@ def move_robot_absolute(new_position, new_orientation):
 
     # TODO: Set robot["Matrix seq"] to be a sequence of matrices that take the robot to the new position and orientation
     #  Use make_translation_dict and make_rotation_dict
-# YOUR CODE HERE
+    # YOUR CODE HERE
     # Now build the actual matrix from the sequence
     robot["Matrix"] = get_matrix_from_sequence(robot["Matrix seq"])
 
@@ -86,7 +86,7 @@ def move_robot_relative(vec, d_theta):
     #     Make the dx, dy vector and multiply by the current matrix to figure out what that motion is in the world
     #  They result in the same thing, mathematically
     #  Either way, the orientation is just the current orientation plus the new turn amount
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 # ----------------------------- plotting code -----------------------

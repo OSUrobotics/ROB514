@@ -236,7 +236,7 @@ def cluster_kmeans(x_values, n_centers):
     @param n_centers - number of centers to look for (2 or 3, can be up to 5)
     @returns - centers (in original coordinate system), assignment of points to centers (labels)"""
 
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 def t_test(samples_a, samples_b):
@@ -245,7 +245,7 @@ def t_test(samples_a, samples_b):
     @param samples_b - the samples from the second cluster
     @return True if dissimilar and statistically significant as a string (T/F different, t= ? p = ?) """
 
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 def fit_x_values_one_cluster(samples_x, samples_y):
@@ -255,7 +255,7 @@ def fit_x_values_one_cluster(samples_x, samples_y):
     @param samples_y - y samples
     @return mu, sigma, L2 err"""
 
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
 
 def fit_y_values_one_cluster(samples_x, samples_y):
@@ -263,7 +263,7 @@ def fit_y_values_one_cluster(samples_x, samples_y):
     @param samples_x - x samples
     @param samples_y - y samples
     @return mu, sigma, L2 err"""
-# YOUR CODE HERE
+        # YOUR CODE HERE
     # Returning fit_x_values so code won't break
     return fit_x_values_one_cluster(samples_x, samples_y)
 
@@ -305,7 +305,7 @@ def remove_outliers(samples, labels, n_clusters, perc_mean_err):
     @returns new_labels - a 1xn set of integer labels, with the label -1 indicating the data point is an outlier"""
 
 
-# YOUR CODE HERE
+        # YOUR CODE HERE
     # Returning labels so other code won't break
     return labels
 
@@ -385,7 +385,7 @@ if __name__ == '__main__':
     # Original
     do_example(mus=(-0.2, 0.3), sigmas=(0.15, 0.2), noise_level=0.1, n_samples=(500, 500, 50), n_clusters=2, perc_mean_err_clip=3.0)
 
-# YOUR CODE HERE
+    # YOUR CODE HERE
 
     # Depending on if your mac, windows, linux, and if interactive is true, you may need to call this to get the plt
     # windows to show
