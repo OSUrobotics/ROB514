@@ -29,7 +29,7 @@ import arm_ik_gradient as ik_gradient
 
 # ----------------------------- Practice with calculating Jacobian for one link -------------------------------------------
 
-def practice_jacobian():
+def practice_jacobian(b_print=False):
     """ An example problem of an arm with radius 3 currently at angle theta = 0.2
     This is just to check that you can calculate the Jacobian for one link before doing the matrix version
      If you have trouble with this, get the TA to give you the solution"""
@@ -81,9 +81,10 @@ def practice_jacobian():
     # The actual point you end up at if you change the angle by that much
     pt_moved = [radius * np.cos(theta + d_ang[0][0]), radius * np.sin(theta + d_ang[0][0])]
 
-    print(f"Delta angle {d_ang[0]}, should be -0.32")
-    print(f"New point and moved point should be the close to the same")
-    print(f"Old point: {pt_end}\nNew pt: {pt_new_end}\nMoved pt: {pt_moved}")
+    if b_print:
+        print(f"Delta angle {d_ang[0]}, should be -0.32")
+        print(f"New point and moved point should be the close to the same")
+        print(f"Old point: {pt_end}\nNew pt: {pt_new_end}\nMoved pt: {pt_moved}")
 
     return d_ang
 
